@@ -4,14 +4,14 @@
 
 @section('content')
 
-{{-- Stat Cards --}}
+{{-- Global Stats --}}
 <div class="row g-3 mb-4">
     <div class="col-md-3">
         <div class="stat-card">
             <div class="d-flex justify-content-between align-items-center">
                 <div>
-                    <div class="text-muted small">Cuaca Dipantau</div>
-                    <div class="fs-4 fw-bold">12 Kota</div>
+                    <div class="text-muted small">Kota Cuaca Dipantau</div>
+                    <div class="fs-4 fw-bold">{{ $globalStats['weather'] }} Kota</div>
                 </div>
                 <div class="icon-box bg-primary bg-opacity-10 text-primary">
                     <i class="bi bi-cloud-sun"></i>
@@ -24,7 +24,7 @@
             <div class="d-flex justify-content-between align-items-center">
                 <div>
                     <div class="text-muted small">Negara Dipantau</div>
-                    <div class="fs-4 fw-bold">50+ Negara</div>
+                    <div class="fs-4 fw-bold">{{ $globalStats['countries'] }}+</div>
                 </div>
                 <div class="icon-box bg-success bg-opacity-10 text-success">
                     <i class="bi bi-globe2"></i>
@@ -36,8 +36,8 @@
         <div class="stat-card">
             <div class="d-flex justify-content-between align-items-center">
                 <div>
-                    <div class="text-muted small">Pelabuhan Aktif</div>
-                    <div class="fs-4 fw-bold">20 Port</div>
+                    <div class="text-muted small">Pelabuhan Dipantau</div>
+                    <div class="fs-4 fw-bold">{{ $globalStats['ports'] }} Port</div>
                 </div>
                 <div class="icon-box bg-warning bg-opacity-10 text-warning">
                     <i class="bi bi-anchor"></i>
@@ -49,8 +49,8 @@
         <div class="stat-card">
             <div class="d-flex justify-content-between align-items-center">
                 <div>
-                    <div class="text-muted small">Berita Terbaru</div>
-                    <div class="fs-4 fw-bold">Real-time</div>
+                    <div class="text-muted small">Update Berita</div>
+                    <div class="fs-4 fw-bold text-success">{{ $globalStats['news'] }}</div>
                 </div>
                 <div class="icon-box bg-danger bg-opacity-10 text-danger">
                     <i class="bi bi-newspaper"></i>
@@ -60,60 +60,211 @@
     </div>
 </div>
 
-{{-- Charts Row --}}
+{{-- Cuaca & Nilai Tukar --}}
+<div class="row g-3 mb-4">
+
+    {{-- Cuaca --}}
+    <div class="col-md-6">
+        <div class="section-card h-100">
+            <div class="section-title">
+                🌤️ Cuaca Kota Strategis
+                <a href="{{ route('weather') }}" class="btn btn-sm btn-outline-primary float-end">
+                    Lihat Semua
+                </a>
+            </div>
+            <div class="row g-2">
+                @forelse($weatherSummary as $w)
+                <div class="col-6">
+                    <div class="card border-0 bg-light p-2 text-center">
+                        <div style="font-size:1.8rem;">{{ $w['icon'] }}</div>
+                        <div class="fw-bold small">{{ $w['city'] }}</div>
+                        <div class="fs-5 fw-bold text-primary">{{ $w['temp'] }}°C</div>
+                    </div>
+                </div>
+                @empty
+                <div class="text-muted text-center py-3">Data tidak tersedia</div>
+                @endforelse
+            </div>
+        </div>
+    </div>
+
+    {{-- Nilai Tukar --}}
+    <div class="col-md-6">
+        <div class="section-card h-100">
+            <div class="section-title">
+                💱 Nilai Tukar (Base: USD)
+                <a href="{{ route('currency') }}" class="btn btn-sm btn-outline-primary float-end">
+                    Lihat Semua
+                </a>
+            </div>
+            @if(count($currencySummary) > 0)
+            <div class="table-responsive">
+                <table class="table table-sm table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Mata Uang</th>
+                            <th class="text-end">Kurs</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($currencySummary as $code => $rate)
+                        <tr>
+                            <td class="fw-bold">{{ $code }}</td>
+                            <td class="text-end text-success fw-bold">
+                                {{ number_format($rate, 4) }}
+                            </td>
+                        </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+            @else
+                <div class="text-muted text-center py-3">Data tidak tersedia</div>
+            @endif
+        </div>
+    </div>
+
+</div>
+
+{{-- Peta & Risiko --}}
+<div class="row g-3 mb-4">
+
+    {{-- Peta --}}
+    <div class="col-md-8">
+        <div class="section-card h-100">
+            <div class="section-title">
+                🗺️ Peta Pelabuhan Global
+                <a href="{{ route('port') }}" class="btn btn-sm btn-outline-primary float-end">
+                    Lihat Semua
+                </a>
+            </div>
+            <div id="dashboard-map" style="height: 300px; border-radius: 8px;"></div>
+        </div>
+    </div>
+
+    {{-- Ringkasan Risiko --}}
+    <div class="col-md-4">
+        <div class="section-card h-100">
+            <div class="section-title">⚠️ Status Pelabuhan Utama</div>
+            <div class="list-group list-group-flush">
+                @foreach($portSummary as $port)
+                <div class="list-group-item px-0">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="fw-bold small">{{ $port['name'] }}</div>
+                            <div class="text-muted" style="font-size:0.75rem;">
+                                {{ $port['country'] }} · {{ $port['volume'] }}M TEU
+                            </div>
+                        </div>
+                        @if($port['status'] === 'active')
+                            <span class="badge bg-success">Aktif</span>
+                        @elseif($port['status'] === 'busy')
+                            <span class="badge bg-warning text-dark">Sibuk</span>
+                        @else
+                            <span class="badge bg-danger">Gangguan</span>
+                        @endif
+                    </div>
+                </div>
+                @endforeach
+            </div>
+        </div>
+    </div>
+
+</div>
+
+{{-- Grafik Risiko --}}
 <div class="row g-3 mb-4">
     <div class="col-md-8">
         <div class="section-card">
-            <div class="section-title">📈 Indikator Risiko Rantai Pasok</div>
+            <div class="section-title">📈 Indikator Risiko Rantai Pasok Global</div>
             <canvas id="riskChart" height="120"></canvas>
         </div>
     </div>
     <div class="col-md-4">
         <div class="section-card">
-            <div class="section-title">🔴 Level Risiko Saat Ini</div>
-            <canvas id="riskDonut" height="200"></canvas>
+            <div class="section-title">🔴 Distribusi Level Risiko</div>
+            <canvas id="riskDonut" height="220"></canvas>
         </div>
     </div>
 </div>
 
-{{-- Map & News Row --}}
-<div class="row g-3">
-    <div class="col-md-8">
-        <div class="section-card">
-            <div class="section-title">🗺️ Peta Monitoring Global</div>
-            <div id="world-map" style="height: 300px; border-radius: 8px;"></div>
-        </div>
+{{-- Berita Terbaru --}}
+<div class="section-card">
+    <div class="section-title">
+        📰 Berita Global Terbaru
+        <a href="{{ route('news') }}" class="btn btn-sm btn-outline-primary float-end">
+            Lihat Semua
+        </a>
     </div>
-    <div class="col-md-4">
-        <div class="section-card">
-            <div class="section-title">⚠️ Ringkasan Risiko</div>
-            <div class="list-group list-group-flush">
-                <div class="list-group-item px-0 d-flex justify-content-between">
-                    <span><i class="bi bi-cloud-lightning text-warning"></i> Cuaca Ekstrem</span>
-                    <span class="badge bg-warning">Sedang</span>
-                </div>
-                <div class="list-group-item px-0 d-flex justify-content-between">
-                    <span><i class="bi bi-graph-down text-danger"></i> Inflasi Global</span>
-                    <span class="badge bg-danger">Tinggi</span>
-                </div>
-                <div class="list-group-item px-0 d-flex justify-content-between">
-                    <span><i class="bi bi-currency-exchange text-success"></i> Nilai Tukar</span>
-                    <span class="badge bg-success">Rendah</span>
-                </div>
-                <div class="list-group-item px-0 d-flex justify-content-between">
-                    <span><i class="bi bi-anchor text-primary"></i> Pelabuhan</span>
-                    <span class="badge bg-primary">Normal</span>
+    @if(count($newsSummary) > 0)
+    <div class="row g-3">
+        @foreach($newsSummary as $article)
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm h-100">
+                @if(!empty($article['image']))
+                    <img src="{{ $article['image'] }}" class="card-img-top"
+                         style="height:120px; object-fit:cover;"
+                         onerror="this.style.display='none'">
+                @endif
+                <div class="card-body p-2">
+                    <span class="badge bg-primary mb-1" style="font-size:0.65rem;">
+                        {{ $article['source']['name'] ?? 'News' }}
+                    </span>
+                    <p class="small fw-bold mb-1" style="font-size:0.8rem; line-height:1.3;">
+                        {{ Str::limit($article['title'], 80) }}
+                    </p>
+                    <a href="{{ $article['url'] }}" target="_blank"
+                       class="btn btn-sm btn-outline-secondary w-100" style="font-size:0.75rem;">
+                        Baca
+                    </a>
                 </div>
             </div>
         </div>
+        @endforeach
     </div>
+    @else
+        <div class="text-muted text-center py-3">
+            <i class="bi bi-newspaper"></i> Berita tidak tersedia
+        </div>
+    @endif
 </div>
 
 @endsection
 
 @push('scripts')
 <script>
-// Chart risiko garis
+// ===== PETA =====
+const map = L.map('dashboard-map').setView([20, 0], 2);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap'
+}).addTo(map);
+
+const ports = @json($portSummary);
+ports.forEach(port => {
+    // Koordinat pelabuhan utama
+    const coords = {
+        'Port of Shanghai':  [31.2304, 121.4737],
+        'Port of Singapore': [1.2644, 103.8229],
+        'Port of Rotterdam': [51.9225, 4.4792],
+        'Port of Dubai':     [25.0657, 55.1713],
+        'Port of Alexandria':[31.2001, 29.9187],
+    };
+    const color = port.status === 'active' ? '#2196F3' :
+                  port.status === 'busy'   ? '#FF9800' : '#F44336';
+
+    const latlon = coords[port.name];
+    if (latlon) {
+        const icon = L.divIcon({
+            className: '',
+            html: `<div style="width:12px;height:12px;background:${color};border:2px solid white;border-radius:50%;box-shadow:0 2px 4px rgba(0,0,0,0.3);"></div>`,
+            iconSize: [12, 12], iconAnchor: [6, 6]
+        });
+        L.marker(latlon, { icon }).addTo(map)
+            .bindPopup(`<strong>⚓ ${port.name}</strong><br>${port.country}<br>Volume: ${port.volume}M TEU`);
+    }
+});
+
+// ===== CHART RISIKO GARIS =====
 new Chart(document.getElementById('riskChart'), {
     type: 'line',
     data: {
@@ -123,54 +274,46 @@ new Chart(document.getElementById('riskChart'), {
                 label: 'Risiko Cuaca',
                 data: [30, 45, 35, 60, 40, 55],
                 borderColor: '#42a5f5',
-                tension: 0.4, fill: false
+                backgroundColor: 'rgba(66,165,245,0.1)',
+                tension: 0.4, fill: true
             },
             {
                 label: 'Risiko Ekonomi',
                 data: [50, 55, 65, 70, 60, 75],
                 borderColor: '#ef5350',
-                tension: 0.4, fill: false
+                backgroundColor: 'rgba(239,83,80,0.1)',
+                tension: 0.4, fill: true
             },
             {
                 label: 'Risiko Logistik',
                 data: [40, 35, 50, 45, 55, 50],
                 borderColor: '#66bb6a',
-                tension: 0.4, fill: false
+                backgroundColor: 'rgba(102,187,106,0.1)',
+                tension: 0.4, fill: true
             }
         ]
     },
-    options: { plugins: { legend: { position: 'bottom' } } }
+    options: {
+        plugins: { legend: { position: 'bottom' } },
+        scales: { y: { beginAtZero: true, max: 100 } }
+    }
 });
 
-// Donut chart
+// ===== DONUT CHART =====
 new Chart(document.getElementById('riskDonut'), {
     type: 'doughnut',
     data: {
-        labels: ['Rendah', 'Sedang', 'Tinggi'],
+        labels: ['Risiko Rendah', 'Risiko Sedang', 'Risiko Tinggi'],
         datasets: [{
-            data: [40, 35, 25],
-            backgroundColor: ['#66bb6a', '#ffa726', '#ef5350']
+            data: [45, 35, 20],
+            backgroundColor: ['#66bb6a', '#ffa726', '#ef5350'],
+            borderWidth: 2
         }]
     },
-    options: { plugins: { legend: { position: 'bottom' } } }
-});
-
-// Peta Leaflet
-const map = L.map('world-map').setView([20, 0], 2);
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '© OpenStreetMap'
-}).addTo(map);
-
-// Contoh marker pelabuhan
-const ports = [
-    { name: "Port of Shanghai", lat: 31.2, lng: 121.5 },
-    { name: "Port of Singapore", lat: 1.26, lng: 103.8 },
-    { name: "Port of Rotterdam", lat: 51.9, lng: 4.4 },
-    { name: "Port of Los Angeles", lat: 33.7, lng: -118.2 },
-    { name: "Port of Dubai", lat: 25.2, lng: 55.3 },
-];
-ports.forEach(p => {
-    L.marker([p.lat, p.lng]).addTo(map).bindPopup(p.name);
+    options: {
+        plugins: { legend: { position: 'bottom' } },
+        cutout: '65%'
+    }
 });
 </script>
 @endpush

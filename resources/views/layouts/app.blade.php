@@ -3,13 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Supply Chain Monitor</title>
+    <title>RiskRadar — Supply Chain Analytics</title>
 
-    {{-- Bootstrap CSS --}}
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    {{-- Bootstrap Icons --}}
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
-    {{-- Leaflet CSS (untuk peta) --}}
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 
     <style>
@@ -27,8 +24,6 @@
         }
         .sidebar .brand {
             color: white;
-            font-size: 1.1rem;
-            font-weight: 700;
             padding: 10px 20px 20px;
             border-bottom: 1px solid rgba(255,255,255,0.1);
             margin-bottom: 10px;
@@ -48,10 +43,7 @@
         .sidebar .nav-link i { margin-right: 8px; width: 20px; }
 
         /* Main content */
-        .main-content {
-            margin-left: 250px;
-            padding: 20px;
-        }
+        .main-content { margin-left: 250px; padding: 20px; }
 
         /* Topbar */
         .topbar {
@@ -98,6 +90,28 @@
             padding-bottom: 10px;
             border-bottom: 2px solid #e8eaf6;
         }
+
+        /* Radar animation */
+        @keyframes radarPulse {
+            0%   { box-shadow: 0 0 0 0 rgba(100,181,246,0.4); }
+            70%  { box-shadow: 0 0 0 10px rgba(100,181,246,0); }
+            100% { box-shadow: 0 0 0 0 rgba(100,181,246,0); }
+        }
+        .radar-icon {
+            width: 36px; height: 36px;
+            background: rgba(100,181,246,0.15);
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            animation: radarPulse 2s infinite;
+        }
+
+        /* Risk colors */
+        .risk-low    { background: #1b5e20; color: white; }
+        .risk-medium { background: #e65100; color: white; }
+        .risk-high   { background: #b71c1c; color: white; }
+
+        /* Gauge */
+        .gauge-wrap { position: relative; text-align: center; }
     </style>
 
     @stack('styles')
@@ -107,12 +121,22 @@
 {{-- SIDEBAR --}}
 <div class="sidebar">
     <div class="brand">
-        <i class="bi bi-globe2"></i> Supply Chain<br>
-        <small style="font-weight:400; font-size:0.75rem; opacity:0.7">Risk Monitor</small>
+        <div class="d-flex align-items-center gap-2">
+            <div class="radar-icon">
+                <i class="bi bi-radar" style="font-size:1.4rem; color:#64b5f6;"></i>
+            </div>
+            <div>
+                <div style="font-size:1rem; font-weight:700; color:white;">RiskRadar</div>
+                <div style="font-size:0.65rem; color:rgba(255,255,255,0.6); letter-spacing:1px;">SUPPLY CHAIN ANALYTICS</div>
+            </div>
+        </div>
     </div>
     <nav class="nav flex-column">
         <a href="{{ route('dashboard') }}" class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}">
             <i class="bi bi-speedometer2"></i> Dashboard
+        </a>
+        <a href="{{ route('risk') }}" class="nav-link {{ request()->routeIs('risk') ? 'active' : '' }}">
+            <i class="bi bi-radar"></i> Risk Scoring
         </a>
         <a href="{{ route('weather') }}" class="nav-link {{ request()->routeIs('weather') ? 'active' : '' }}">
             <i class="bi bi-cloud-sun"></i> Cuaca Global
@@ -137,7 +161,6 @@
 
 {{-- MAIN CONTENT --}}
 <div class="main-content">
-    {{-- Topbar --}}
     <div class="topbar">
         <div>
             <h5 class="mb-0 fw-bold">@yield('page-title', 'Dashboard')</h5>
@@ -149,19 +172,14 @@
         </div>
     </div>
 
-    {{-- Konten halaman --}}
     @yield('content')
 </div>
 
-{{-- Bootstrap JS --}}
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-{{-- Chart.js --}}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-{{-- Leaflet JS --}}
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
 <script>
-    // Jam real-time di topbar
     function updateTime() {
         const now = new Date();
         document.getElementById('current-time').textContent = now.toLocaleString('id-ID');
