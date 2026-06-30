@@ -56,4 +56,30 @@ class CountryController extends Controller
 
         return view('country.index', compact('countries', 'stats', 'search', 'region'));
     }
+
+    public function api(Request $request)
+{
+    $search = $request->get('search', '');
+    $countries = [];
+
+    try {
+        $response = Http::withoutVerifying()->timeout(30)
+            ->get('https://countriesnow.space/api/v0.1/countries/info?returns=name,capital,currency,flag,dialCode,unicodeFlag,iso2,iso3');
+
+        if ($response->successful()) {
+            $data = $response->json()['data'];
+            if (!empty($search)) {
+                $data = array_filter($data, fn($c) => stripos($c['name'], $search) !== false);
+            }
+            $countries = array_values($data);
+        }
+    } catch (\Exception $e) {}
+
+    return response()->json([
+        'success' => true,
+        'total'   => count($countries),
+        'data'    => $countries,
+    ]);
+}
+
 }

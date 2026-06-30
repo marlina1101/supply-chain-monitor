@@ -13,6 +13,7 @@ use App\Http\Controllers\CompareController;
 use App\Http\Controllers\WatchlistController;
 use App\Http\Controllers\AdminController;
 
+
 Route::get('/', function () {
     return redirect()->route('dashboard');
 });

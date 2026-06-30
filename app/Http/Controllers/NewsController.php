@@ -58,4 +58,37 @@ class NewsController extends Controller
 
         return view('news.index', compact('news', 'categories', 'category', 'error'));
     }
+
+    public function api(Request $request)
+{
+    $category = $request->get('category', 'economy');
+
+    $queries = [
+        'economy'     => 'global economy trade',
+        'logistics'   => 'supply chain logistics shipping',
+        'geopolitics' => 'geopolitics conflict international',
+        'trade'       => 'international trade export import',
+    ];
+
+    $news = [];
+    try {
+        $query = $queries[$category] ?? 'global economy';
+        $response = Http::withoutVerifying()->timeout(30)
+            ->get('https://gnews.io/api/v4/search', [
+                'q' => $query, 'lang' => 'en', 'max' => 10,
+                'apikey' => $this->apiKey,
+            ]);
+        if ($response->successful()) {
+            $news = $response->json()['articles'] ?? [];
+        }
+    } catch (\Exception $e) {}
+
+    return response()->json([
+        'success'  => true,
+        'category' => $category,
+        'total'    => count($news),
+        'data'     => $news,
+    ]);
+}
+
 }

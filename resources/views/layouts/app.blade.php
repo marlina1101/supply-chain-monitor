@@ -142,6 +142,10 @@
         <a href="{{ route('compare') }}" class="nav-link {{ request()->routeIs('compare') ? 'active' : '' }}">
     <i class="bi bi-arrow-left-right"></i> Compare
 </a>
+
+<a href="{{ route('watchlist') }}" class="nav-link {{ request()->routeIs('watchlist') ? 'active' : '' }}">
+    <i class="bi bi-star"></i> Watchlist
+</a>
         
         <a href="{{ route('weather') }}" class="nav-link {{ request()->routeIs('weather') ? 'active' : '' }}">
             <i class="bi bi-cloud-sun"></i> Cuaca Global

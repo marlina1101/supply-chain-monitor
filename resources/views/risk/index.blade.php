@@ -4,6 +4,19 @@
 
 @section('content')
 
+@if(session('success'))
+    <div class="alert alert-success alert-dismissible fade show">
+        <i class="bi bi-check-circle"></i> {{ session('success') }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+@endif
+@if(session('info'))
+    <div class="alert alert-info alert-dismissible fade show">
+        <i class="bi bi-info-circle"></i> {{ session('info') }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+@endif
+
 {{-- Country Selector --}}
 <div class="section-card mb-4">
     <div class="section-title">🎯 Pilih Negara untuk Analisis Risiko</div>
@@ -51,6 +64,15 @@
             <div class="mt-3 text-muted small">
                 Negara: <strong>{{ $country['name'] }}</strong>
             </div>
+
+            {{-- Tombol Tambah Watchlist --}}
+            <form method="POST" action="{{ route('watchlist.add') }}" class="mt-3">
+                @csrf
+                <input type="hidden" name="country_code" value="{{ $selected }}">
+                <button type="submit" class="btn btn-sm btn-outline-primary w-100">
+                    <i class="bi bi-star"></i> Tambah ke Watchlist
+                </button>
+            </form>
         </div>
     </div>
 

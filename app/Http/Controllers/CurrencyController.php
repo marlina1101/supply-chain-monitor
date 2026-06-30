@@ -69,4 +69,28 @@ class CurrencyController extends Controller
 
         return view('currency.index', compact('rates', 'base', 'error', 'mainCurrencies'));
     }
+
+    public function api(Request $request)
+{
+    $base = $request->get('base', 'USD');
+    $rates = [];
+
+    try {
+        $response = Http::withoutVerifying()->timeout(30)
+            ->get("https://v6.exchangerate-api.com/v6/{$this->apiKey}/latest/{$base}");
+        if ($response->successful()) {
+            $data = $response->json();
+            if ($data['result'] === 'success') {
+                $rates = $data['conversion_rates'];
+            }
+        }
+    } catch (\Exception $e) {}
+
+    return response()->json([
+        'success' => true,
+        'base'    => $base,
+        'rates'   => $rates,
+    ]);
+}
+
 }

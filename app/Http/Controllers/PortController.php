@@ -64,4 +64,21 @@ class PortController extends Controller
 
         return view('port.index', compact('ports', 'regions', 'region', 'stats'));
     }
+
+    public function api(Request $request)
+{
+    $region = $request->get('region', 'all');
+    $ports = $this->ports;
+
+    if ($region !== 'all') {
+        $ports = array_values(array_filter($ports, fn($p) => $p['region'] === $region));
+    }
+
+    return response()->json([
+        'success' => true,
+        'total'   => count($ports),
+        'data'    => $ports,
+    ]);
+}
+
 }

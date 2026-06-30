@@ -111,4 +111,27 @@ class RiskController extends Controller
             'weatherCode', 'windSpeed', 'temp', 'inflationRate', 'exchangeRate'
         ));
     }
+
+    public function api(Request $request)
+{
+    $selected = $request->get('country', 'ID');
+
+    // Reuse logic dari index() — panggil ulang dengan request yang sama
+    $response = $this->index($request);
+    $data = $response->getData();
+
+    return response()->json([
+        'success' => true,
+        'country' => $data['country']['name'] ?? $selected,
+        'risk_score' => $data['totalRisk'] ?? 0,
+        'risk_level' => $data['riskLevel']['level'] ?? 'N/A',
+        'breakdown' => [
+            'weather'   => round($data['weatherRisk'] ?? 0, 1),
+            'inflation' => round($data['inflationRisk'] ?? 0, 1),
+            'currency'  => round($data['currencyRisk'] ?? 0, 1),
+            'news'      => round($data['newsRisk'] ?? 0, 1),
+        ],
+    ]);
+}
+
 }
