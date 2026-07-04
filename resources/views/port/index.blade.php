@@ -17,6 +17,28 @@
     </div>
 </div>
 
+{{-- Live Search --}}
+<div class="section-card mb-4">
+    <div class="section-title">🔍 Cari Pelabuhan (Live Search)</div>
+    <div class="row g-2">
+        <div class="col-md-8">
+            <input type="text" id="liveSearch" class="form-control form-control-lg"
+                   placeholder="Ketik nama pelabuhan atau negara... (langsung muncul!)"
+                   value="{{ $search ?? '' }}">
+        </div>
+        <div class="col-md-2">
+            <button onclick="clearSearch()" class="btn btn-secondary btn-lg w-100">
+                <i class="bi bi-x-circle"></i> Reset
+            </button>
+        </div>
+        <div class="col-md-2">
+            <div class="text-muted small pt-2">
+                <span id="searchResultCount">{{ count($ports) }}</span> pelabuhan ditemukan
+            </div>
+        </div>
+    </div>
+</div>
+
 {{-- Stats --}}
 <div class="row g-3 mb-4">
     <div class="col-md-4">
@@ -71,7 +93,7 @@
     </div>
 </div>
 
-{{-- Table --}}
+{{-- Tabel --}}
 <div class="section-card">
     <div class="section-title">📋 Daftar Pelabuhan</div>
     <div class="table-responsive">
@@ -86,7 +108,7 @@
                     <th>Status</th>
                 </tr>
             </thead>
-            <tbody>
+            <tbody id="portTableBody">
                 @foreach($ports as $i => $port)
                 <tr>
                     <td class="text-muted">{{ $i + 1 }}</td>
@@ -122,40 +144,27 @@
 
 @push('scripts')
 <script>
-// Inisialisasi peta
+// ===== PETA LEAFLET =====
 const map = L.map('port-map').setView([20, 0], 2);
-
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '© OpenStreetMap contributors'
 }).addTo(map);
 
-// Data pelabuhan dari PHP
 const ports = @json($ports);
 
-// Warna marker berdasarkan status
 function getColor(status) {
-    if (status === 'active')    return '#2196F3';
-    if (status === 'busy')      return '#FF9800';
+    if (status === 'active') return '#2196F3';
+    if (status === 'busy')   return '#FF9800';
     return '#F44336';
 }
 
-// Tambahkan marker untuk setiap pelabuhan
 ports.forEach(port => {
     const color = getColor(port.status);
-
     const icon = L.divIcon({
         className: '',
-        html: `<div style="
-            width: 14px; height: 14px;
-            background: ${color};
-            border: 2px solid white;
-            border-radius: 50%;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-        "></div>`,
-        iconSize: [14, 14],
-        iconAnchor: [7, 7],
+        html: `<div style="width:14px;height:14px;background:${color};border:2px solid white;border-radius:50%;box-shadow:0 2px 4px rgba(0,0,0,0.3);"></div>`,
+        iconSize: [14, 14], iconAnchor: [7, 7],
     });
-
     L.marker([port.lat, port.lon], { icon })
         .addTo(map)
         .bindPopup(`
@@ -167,5 +176,81 @@ ports.forEach(port => {
             </div>
         `);
 });
+
+// ===== AJAX: Live Search Pelabuhan =====
+let searchTimer;
+
+document.getElementById('liveSearch').addEventListener('input', function() {
+    clearTimeout(searchTimer);
+    const query = this.value.trim();
+    searchTimer = setTimeout(function() {
+        doLiveSearch(query);
+    }, 300);
+});
+
+function doLiveSearch(query) {
+    const tbody  = document.getElementById('portTableBody');
+    const countEl = document.getElementById('searchResultCount');
+    if (!tbody) return;
+
+    fetch('/api/ports')
+        .then(res => res.json())
+        .then(data => {
+            if (!data.success) return;
+
+            let ports = data.data;
+            if (query.length > 0) {
+                ports = ports.filter(p =>
+                    p.name.toLowerCase().includes(query.toLowerCase()) ||
+                    p.country.toLowerCase().includes(query.toLowerCase())
+                );
+            }
+
+            if (countEl) countEl.textContent = ports.length;
+
+            if (ports.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="text-center text-muted py-4">
+                            <i class="bi bi-search"></i> Tidak ada pelabuhan cocok dengan "${query}"
+                        </td>
+                    </tr>`;
+                return;
+            }
+
+            let html = '';
+            ports.forEach((port, i) => {
+                const statusBadge = port.status === 'active'
+                    ? '<span class="badge bg-success">✅ Aktif</span>'
+                    : port.status === 'busy'
+                        ? '<span class="badge bg-warning text-dark">⚡ Sibuk</span>'
+                        : '<span class="badge bg-danger">⚠️ Terganggu</span>';
+                const barWidth = Math.min((port.volume / 50) * 100, 100);
+                html += `
+                <tr>
+                    <td class="text-muted">${i + 1}</td>
+                    <td class="fw-bold">${port.name}</td>
+                    <td>${port.country}</td>
+                    <td><span class="badge bg-secondary">${port.region}</span></td>
+                    <td>
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="progress flex-grow-1" style="height:6px;">
+                                <div class="progress-bar bg-primary" style="width:${barWidth}%"></div>
+                            </div>
+                            <span class="fw-bold">${port.volume}</span>
+                        </div>
+                    </td>
+                    <td>${statusBadge}</td>
+                </tr>`;
+            });
+            tbody.innerHTML = html;
+        })
+        .catch(err => console.error('Live search error:', err));
+}
+
+function clearSearch() {
+    document.getElementById('liveSearch').value = '';
+    doLiveSearch('');
+}
 </script>
 @endpush

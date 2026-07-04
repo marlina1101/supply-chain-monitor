@@ -108,10 +108,71 @@
     <canvas id="currencyChart" height="100"></canvas>
 </div>
 
+{{-- Live Currency Converter --}}
+<div class="section-card mt-4">
+    <div class="section-title">⚡ Live Currency Converter (AJAX)</div>
+    <div class="row g-3 align-items-center">
+        <div class="col-md-3">
+            <label class="form-label small fw-bold">Nominal</label>
+            <input type="number" id="convertAmount" class="form-control form-control-lg"
+                   value="1000" min="0" step="any" placeholder="Masukkan nominal...">
+        </div>
+        <div class="col-md-3">
+            <label class="form-label small fw-bold">Dari Mata Uang</label>
+            <select id="fromCurrency" class="form-select form-select-lg">
+                @foreach($mainCurrencies as $code => $info)
+                    <option value="{{ $code }}" {{ $code == 'USD' ? 'selected' : '' }}>
+                        {{ $info['flag'] }} {{ $code }}
+                    </option>
+                @endforeach
+            </select>
+        </div>
+        <div class="col-md-1 text-center pt-4">
+            <button id="swapBtn" class="btn btn-outline-secondary btn-lg">
+                <i class="bi bi-arrow-left-right"></i>
+            </button>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label small fw-bold">Ke Mata Uang</label>
+            <select id="toCurrency" class="form-select form-select-lg">
+                @foreach($mainCurrencies as $code => $info)
+                    <option value="{{ $code }}" {{ $code == 'IDR' ? 'selected' : '' }}>
+                        {{ $info['flag'] }} {{ $code }}
+                    </option>
+                @endforeach
+            </select>
+        </div>
+        <div class="col-md-2 pt-4">
+            <button id="convertBtn" class="btn btn-primary btn-lg w-100">
+                <i class="bi bi-calculator"></i> Konversi
+            </button>
+        </div>
+    </div>
+
+    {{-- Hasil Konversi --}}
+    <div id="convertResult" class="mt-4" style="display:none;">
+        <div class="p-4 rounded-3" style="background: linear-gradient(135deg, #1a237e, #283593);">
+            <div class="text-white text-center">
+                <div class="fs-6 opacity-75 mb-1">Hasil Konversi</div>
+                <div class="fs-1 fw-bold" id="resultAmount">—</div>
+                <div class="fs-6 opacity-75 mt-1" id="resultDetail">—</div>
+                <div class="mt-2 small opacity-50" id="resultTime">—</div>
+            </div>
+        </div>
+    </div>
+
+    {{-- Loading --}}
+    <div id="convertLoading" class="text-center py-3" style="display:none;">
+        <div class="spinner-border text-primary" role="status"></div>
+        <div class="text-muted small mt-2">Mengambil kurs terbaru...</div>
+    </div>
+</div>
+
 @endsection
 
 @push('scripts')
 <script>
+// ===== Chart Nilai Tukar =====
 const labels = @json(array_column($rates, 'code'));
 const values = @json(array_column($rates, 'rate'));
 
@@ -131,5 +192,66 @@ new Chart(document.getElementById('currencyChart'), {
         scales: { y: { beginAtZero: true } }
     }
 });
+
+// ===== AJAX: Live Currency Converter =====
+function doConvert() {
+    const amount = parseFloat(document.getElementById('convertAmount').value) || 0;
+    const from   = document.getElementById('fromCurrency').value;
+    const to     = document.getElementById('toCurrency').value;
+
+    if (amount <= 0) {
+        alert('Masukkan nominal yang valid!');
+        return;
+    }
+
+    document.getElementById('convertLoading').style.display = 'block';
+    document.getElementById('convertResult').style.display  = 'none';
+
+    fetch(`/api/currency?base=${from}`)
+        .then(res => res.json())
+        .then(data => {
+            document.getElementById('convertLoading').style.display = 'none';
+
+            if (data.success && data.rates[to]) {
+                const rate   = data.rates[to];
+                const result = amount * rate;
+
+                document.getElementById('convertResult').style.display = 'block';
+                document.getElementById('resultAmount').textContent =
+                    result.toLocaleString('id-ID', { maximumFractionDigits: 2 }) + ' ' + to;
+                document.getElementById('resultDetail').textContent =
+                    `${amount.toLocaleString()} ${from} × ${rate.toFixed(6)} = ${result.toLocaleString('id-ID', { maximumFractionDigits: 2 })} ${to}`;
+                document.getElementById('resultTime').textContent =
+                    'Data diperbarui: ' + new Date().toLocaleString('id-ID');
+            } else {
+                alert('Gagal mengambil data kurs!');
+            }
+        })
+        .catch(err => {
+            document.getElementById('convertLoading').style.display = 'none';
+            alert('Error: ' + err.message);
+        });
+}
+
+document.getElementById('convertBtn').addEventListener('click', doConvert);
+
+let convertTimer;
+document.getElementById('convertAmount').addEventListener('input', function() {
+    clearTimeout(convertTimer);
+    convertTimer = setTimeout(doConvert, 500);
+});
+
+document.getElementById('fromCurrency').addEventListener('change', doConvert);
+document.getElementById('toCurrency').addEventListener('change', doConvert);
+
+document.getElementById('swapBtn').addEventListener('click', function() {
+    const from = document.getElementById('fromCurrency').value;
+    const to   = document.getElementById('toCurrency').value;
+    document.getElementById('fromCurrency').value = to;
+    document.getElementById('toCurrency').value   = from;
+    doConvert();
+});
+
+doConvert();
 </script>
 @endpush

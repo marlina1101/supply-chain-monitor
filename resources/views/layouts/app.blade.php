@@ -16,7 +16,7 @@
         .sidebar {
             width: 250px;
             min-height: 100vh;
-            background: linear-gradient(180deg, #1a237e 0%, #283593 100%);
+            background: linear-gradient(180deg, #d2aa19 0%, #d2aa19 100%);
             position: fixed;
             top: 0; left: 0;
             z-index: 100;
@@ -135,6 +135,11 @@
         <a href="{{ route('dashboard') }}" class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}">
             <i class="bi bi-speedometer2"></i> Dashboard
         </a>
+
+        <a href="{{ route('globalcountry') }}" class="nav-link {{ request()->routeIs('globalcountry') ? 'active' : '' }}">
+    <i class="bi bi-globe"></i> Country Dashboard
+</a>
+
         <a href="{{ route('risk') }}" class="nav-link {{ request()->routeIs('risk') ? 'active' : '' }}">
             <i class="bi bi-radar"></i> Risk Scoring
         </a>
@@ -165,6 +170,12 @@
         <a href="{{ route('news') }}" class="nav-link {{ request()->routeIs('news') ? 'active' : '' }}">
             <i class="bi bi-newspaper"></i> Berita Global
         </a>
+
+<hr style="border-color: rgba(255,255,255,0.1); margin: 10px 20px;">
+<a href="{{ route('admin') }}" class="nav-link {{ request()->routeIs('admin') ? 'active' : '' }}">
+    <i class="bi bi-gear"></i> Admin Panel
+</a>
+
     </nav>
 </div>
 

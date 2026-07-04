@@ -187,6 +187,21 @@
         </div>
     </div>
 </div>
+{{-- Currency & Risk Trend --}}
+<div class="row g-3 mb-4">
+    <div class="col-md-6">
+        <div class="section-card">
+            <div class="section-title">💱 Currency Trend — IDR/USD (6 Bulan)</div>
+            <canvas id="currencyTrendChart" height="120"></canvas>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="section-card">
+            <div class="section-title">📊 Risk Trend Global (6 Bulan)</div>
+            <canvas id="riskTrendChart" height="120"></canvas>
+        </div>
+    </div>
+</div>
 
 {{-- Berita Terbaru --}}
 <div class="section-card">
@@ -240,18 +255,17 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 }).addTo(map);
 
 const ports = @json($portSummary);
+const coords = {
+    'Port of Shanghai':  [31.2304, 121.4737],
+    'Port of Singapore': [1.2644, 103.8229],
+    'Port of Rotterdam': [51.9225, 4.4792],
+    'Port of Dubai':     [25.0657, 55.1713],
+    'Port of Alexandria':[31.2001, 29.9187],
+};
+
 ports.forEach(port => {
-    // Koordinat pelabuhan utama
-    const coords = {
-        'Port of Shanghai':  [31.2304, 121.4737],
-        'Port of Singapore': [1.2644, 103.8229],
-        'Port of Rotterdam': [51.9225, 4.4792],
-        'Port of Dubai':     [25.0657, 55.1713],
-        'Port of Alexandria':[31.2001, 29.9187],
-    };
     const color = port.status === 'active' ? '#2196F3' :
                   port.status === 'busy'   ? '#FF9800' : '#F44336';
-
     const latlon = coords[port.name];
     if (latlon) {
         const icon = L.divIcon({
@@ -262,7 +276,7 @@ ports.forEach(port => {
         L.marker(latlon, { icon }).addTo(map)
             .bindPopup(`<strong>⚓ ${port.name}</strong><br>${port.country}<br>Volume: ${port.volume}M TEU`);
     }
-});
+}); // ← penutup forEach
 
 // ===== CHART RISIKO GARIS =====
 new Chart(document.getElementById('riskChart'), {
@@ -313,6 +327,64 @@ new Chart(document.getElementById('riskDonut'), {
     options: {
         plugins: { legend: { position: 'bottom' } },
         cutout: '65%'
+    }
+});
+
+// ===== CURRENCY TREND =====
+new Chart(document.getElementById('currencyTrendChart'), {
+    type: 'line',
+    data: {
+        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun'],
+        datasets: [
+            {
+                label: 'IDR/USD',
+                data: [15800, 15950, 16200, 16500, 16800, 17885],
+                borderColor: '#4caf50',
+                backgroundColor: 'rgba(76,175,80,0.1)',
+                tension: 0.4, fill: true, yAxisID: 'y1'
+            },
+            {
+                label: 'JPY/USD',
+                data: [130, 135, 140, 148, 152, 161],
+                borderColor: '#ff5722',
+                backgroundColor: 'rgba(255,87,34,0.1)',
+                tension: 0.4, fill: false, yAxisID: 'y2'
+            }
+        ]
+    },
+    options: {
+        plugins: { legend: { position: 'bottom' } },
+        scales: {
+            y1: { type: 'linear', position: 'left', beginAtZero: false },
+            y2: { type: 'linear', position: 'right', beginAtZero: false, grid: { drawOnChartArea: false } }
+        }
+    }
+});
+
+// ===== RISK TREND =====
+new Chart(document.getElementById('riskTrendChart'), {
+    type: 'line',
+    data: {
+        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun'],
+        datasets: [
+            {
+                label: 'Global Risk Index',
+                data: [42, 45, 38, 52, 48, 43],
+                borderColor: '#9c27b0',
+                backgroundColor: 'rgba(156,39,176,0.1)',
+                tension: 0.4, fill: true,
+            },
+            {
+                label: 'Geopolitical Risk',
+                data: [55, 60, 48, 65, 58, 52],
+                borderColor: '#f44336',
+                tension: 0.4, fill: false,
+            }
+        ]
+    },
+    options: {
+        plugins: { legend: { position: 'bottom' } },
+        scales: { y: { beginAtZero: true, max: 100 } }
     }
 });
 </script>
