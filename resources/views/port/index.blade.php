@@ -41,7 +41,7 @@
 
 {{-- Stats --}}
 <div class="row g-3 mb-4">
-    <div class="col-md-4">
+    <div class="col-md-3">
         <div class="stat-card">
             <div class="d-flex justify-content-between align-items-center">
                 <div>
@@ -54,7 +54,7 @@
             </div>
         </div>
     </div>
-    <div class="col-md-4">
+    <div class="col-md-3">
         <div class="stat-card">
             <div class="d-flex justify-content-between align-items-center">
                 <div>
@@ -67,7 +67,7 @@
             </div>
         </div>
     </div>
-    <div class="col-md-4">
+    <div class="col-md-3">
         <div class="stat-card">
             <div class="d-flex justify-content-between align-items-center">
                 <div>
@@ -76,6 +76,19 @@
                 </div>
                 <div class="icon-box bg-warning bg-opacity-10 text-warning">
                     <i class="bi bi-exclamation-circle"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="text-muted small">Status Terganggu</div>
+                    <div class="fs-4 fw-bold text-danger">{{ $stats['disrupted'] }}</div>
+                </div>
+                <div class="icon-box bg-danger bg-opacity-10 text-danger">
+                    <i class="bi bi-exclamation-triangle"></i>
                 </div>
             </div>
         </div>
@@ -159,6 +172,10 @@ function getColor(status) {
 }
 
 ports.forEach(port => {
+    if (port.lat == null || port.lon == null || isNaN(port.lat) || isNaN(port.lon)) {
+        console.warn('Lewati marker, koordinat tidak valid:', port.name);
+        return;
+    }
     const color = getColor(port.status);
     const icon = L.divIcon({
         className: '',
@@ -179,6 +196,7 @@ ports.forEach(port => {
 
 // ===== AJAX: Live Search Pelabuhan =====
 let searchTimer;
+const currentRegion = "{{ $region ?? 'all' }}";
 
 document.getElementById('liveSearch').addEventListener('input', function() {
     clearTimeout(searchTimer);
@@ -193,7 +211,7 @@ function doLiveSearch(query) {
     const countEl = document.getElementById('searchResultCount');
     if (!tbody) return;
 
-    fetch('/api/ports')
+    fetch('/api/ports?region=' + encodeURIComponent(currentRegion))
         .then(res => res.json())
         .then(data => {
             if (!data.success) return;

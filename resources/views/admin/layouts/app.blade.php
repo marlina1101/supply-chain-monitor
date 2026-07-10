@@ -11,33 +11,12 @@
         .admin-sidebar {
             width: 260px;
             min-height: 100vh;
-            max-height: 100vh;
-            overflow-y: auto;
             background: linear-gradient(180deg, #1a237e 0%, #283593 100%);
             position: fixed;
             top: 0; left: 0;
             z-index: 100;
             padding-top: 0;
         }
-        
-        /* Styling scrollbar */
-        .admin-sidebar::-webkit-scrollbar {
-            width: 6px;
-        }
-
-        .admin-sidebar::-webkit-scrollbar-track {
-            background: rgba(255,255,255,0.05);
-        }
-
-        .admin-sidebar::-webkit-scrollbar-thumb {
-            background: rgba(255,255,255,0.2);
-            border-radius: 3px;
-        }
-
-        .admin-sidebar::-webkit-scrollbar-thumb:hover {
-            background: rgba(255,255,255,0.3);
-        }
-        
         .admin-brand {
             background: rgba(0,0,0,0.2);
             padding: 20px;

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Port;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -12,7 +13,7 @@ class PortController extends Controller
         $region = $request->get('region', 'all');
         $search = $request->get('search', '');
 
-        $query = DB::table('ports');
+        $query = Port::query();
 
         if ($region !== 'all') {
             $query->where('region', $region);
@@ -28,9 +29,10 @@ class PortController extends Controller
 
         $regions = ['all', 'Asia', 'Europe', 'Americas', 'Middle East', 'Africa'];
         $stats = [
-            'total'  => $ports->count(),
-            'active' => $ports->where('status', 'active')->count(),
-            'busy'   => $ports->where('status', 'busy')->count(),
+            'total'     => $ports->count(),
+            'active'    => $ports->where('status', 'active')->count(),
+            'busy'      => $ports->where('status', 'busy')->count(),
+            'disrupted' => $ports->where('status', 'disrupted')->count(),
         ];
 
         $lastSynced = DB::table('system_settings')->where('key', 'ports_last_synced_at')->value('value');
@@ -43,7 +45,7 @@ class PortController extends Controller
     {
         $region = $request->get('region', 'all');
 
-        $query = DB::table('ports');
+        $query = Port::query();
         if ($region !== 'all') {
             $query->where('region', $region);
         }

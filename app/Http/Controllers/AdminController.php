@@ -253,7 +253,7 @@ class AdminController extends Controller
 
 [
         'name' => 'World Port Index (Pelabuhan)',
-        'url'  => 'https://msi.nga.mil/api/publications/download?type=view&key=16920959/SFH00000/UpdatedPub150.csv',
+        'url'  => 'https://api.worldbank.org/v2/country/ID/indicator/NY.GDP.MKTP.CD?format=json&mrv=1&per_page=1',
         'icon' => '⚓',
     ],
 

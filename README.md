@@ -1,58 +1,279 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# 🌍 RiskRadar
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+> **Sistem Monitoring Risiko Rantai Pasok Global Berbasis Web**
 
-## About Laravel
+RiskRadar merupakan aplikasi web yang mengintegrasikan data cuaca, ekonomi, nilai tukar mata uang, serta sentimen berita dari berbagai API eksternal untuk menghasilkan **Supply Chain Risk Score** yang mudah dipahami bagi setiap negara.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+Aplikasi ini membantu pengguna memantau kondisi global yang berpotensi memengaruhi rantai pasok melalui satu dashboard terintegrasi.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+# ✨ Fitur Utama
 
-## Learning Laravel
+## 👤 User
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+Pengguna umum memiliki akses ke berbagai fitur monitoring, antara lain:
 
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+* Dashboard ringkasan
 
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
+  * Cuaca pada empat kota pelabuhan utama
+  * Kurs enam mata uang
+  * Berita terbaru
+  * Statistik pelabuhan
 
-## Agentic Development
+* Halaman informasi:
 
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+  * Weather
+  * Economy
+  * Country
+  * Global Country (250+ negara)
+  * Currency
+  * Port
+  * News
 
-```bash
-composer require laravel/boost --dev
+* **Risk Score**
 
-php artisan boost:install
+  * Menghasilkan skor risiko berdasarkan kondisi cuaca, inflasi, nilai tukar, dan sentimen berita.
+
+* **Compare**
+
+  * Membandingkan tingkat risiko dua atau lebih negara secara berdampingan.
+
+* **Watchlist**
+
+  * Menyimpan negara favorit berbasis session tanpa memerlukan akun tambahan.
+
+* **Profile**
+
+  * Mengelola informasi akun pengguna.
+
+---
+
+## 👨‍💼 Admin
+
+Administrator memiliki seluruh hak akses pengguna ditambah fitur manajemen sistem.
+
+Fitur yang tersedia:
+
+* Dashboard Admin
+* Kelola Pengguna (CRUD)
+* Kelola Artikel (CRUD)
+* Kelola Pelabuhan (CRUD)
+* API Monitor
+* Audit Log
+* Pengaturan Sistem (Key-Value)
+
+---
+
+# 🛠 Teknologi yang Digunakan
+
+| Layer              | Teknologi                        |
+| ------------------ | -------------------------------- |
+| Bahasa Pemrograman | PHP 8.3                          |
+| Framework          | Laravel 13.x                     |
+| Authentication     | Laravel Breeze                   |
+| Frontend           | Blade, Tailwind CSS 3, Alpine.js |
+| Build Tool         | Vite                             |
+| Database           | SQLite (Development)             |
+| Version Control    | Git                              |
+| Testing            | PHPUnit                          |
+| Code Style         | Laravel Pint                     |
+
+---
+
+# 🌐 Integrasi API Eksternal
+
+RiskRadar memanfaatkan tujuh layanan eksternal.
+
+| No | API                    | Fungsi                 | Digunakan Pada                  |
+| -- | ---------------------- | ---------------------- | ------------------------------- |
+| 1  | Open-Meteo API         | Data cuaca real-time   | Dashboard, Weather, Risk Score  |
+| 2  | World Bank API         | GDP, Inflasi, Populasi | Economy, Risk Score             |
+| 3  | CountriesNow API       | Informasi negara       | Country, Global Country         |
+| 4  | ExchangeRate API       | Nilai tukar mata uang  | Dashboard, Currency, Risk Score |
+| 5  | GNews API              | Berita internasional   | Dashboard, News, Risk Score     |
+| 6  | OpenStreetMap Tile API | Tile peta Leaflet      | Port                            |
+| 7  | World Port Index (NGA) | Data pelabuhan dunia   | Sinkronisasi tabel `ports`      |
+
+Semua pemanggilan API menggunakan mekanisme **try-catch**, timeout, dan cache sehingga kegagalan satu layanan tidak menyebabkan seluruh aplikasi berhenti bekerja.
+
+---
+
+# 📊 Cara Kerja Risk Score
+
+Risk score dihitung menggunakan kelas `RiskCalculator` dengan empat komponen utama.
+
+| Komponen               | Bobot | Sumber                          |
+| ---------------------- | ----- | ------------------------------- |
+| Risiko Cuaca           | 30%   | Open-Meteo API                  |
+| Risiko Inflasi         | 20%   | World Bank API                  |
+| Risiko Nilai Tukar     | 10%   | ExchangeRate API                |
+| Risiko Sentimen Berita | 40%   | GNews API + `SentimentAnalyzer` |
+
+### Klasifikasi Risiko
+
+| Skor     | Level          |
+| -------- | -------------- |
+| 0 – 34   | 🟢 Low Risk    |
+| 35 – 64  | 🟠 Medium Risk |
+| 65 – 100 | 🔴 High Risk   |
+
+### Analisis Sentimen
+
+Kelas `SentimentAnalyzer` melakukan analisis sederhana berbasis kata kunci (keyword-based).
+
+Contoh:
+
+**Positif**
+
+* growth
+* profit
+* stable
+* recovery
+
+**Negatif**
+
+* crisis
+* disruption
+* sanction
+* conflict
+
+Selisih jumlah kata positif dan negatif dikonversi menjadi skor sentimen yang selanjutnya dihitung sebagai komponen risiko berita.
+
+---
+
+# 📁 Struktur Folder Proyek
+
+```text
+app/
+├── Http/
+│   ├── Controllers/
+│   └── Middleware/
+├── Models/
+├── Services/
+└── Console/
+    └── Commands/
+
+database/
+├── migrations/
+├── factories/
+└── seeders/
+
+resources/
+├── views/
+├── css/
+└── js/
+
+routes/
+├── web.php
+└── auth.php
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+---
 
-## Contributing
+# 🗄 Struktur Basis Data
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+| Tabel              | Deskripsi                |
+| ------------------ | ------------------------ |
+| users              | Data pengguna dan admin  |
+| countries          | Data negara              |
+| risk_scores        | Hasil perhitungan risiko |
+| ports              | Data pelabuhan           |
+| watchlists         | Negara favorit pengguna  |
+| news_cache         | Cache berita             |
+| articles           | Artikel                  |
+| activity_logs      | Audit aktivitas admin    |
+| news_categories    | Kategori berita          |
+| system_settings    | Pengaturan sistem        |
+| risk_alerts        | Notifikasi risiko        |
+| currency_history   | Riwayat kurs             |
+| sentiment_keywords | Kata kunci sentimen      |
+| regional_stats     | Statistik wilayah        |
 
-## Code of Conduct
+Sebagian besar tabel indikator menggunakan `country_code` sebagai penghubung karena data berasal dari API eksternal yang dapat berubah sewaktu-waktu.
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+---
 
-## Security Vulnerabilities
+# 🚀 Instalasi
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+```bash
+# Clone Repository
+git clone <repository-url>
 
-## License
+cd supply-chain-monitor
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+# Install Dependency
+composer install
+npm install
+
+# Copy Environment
+cp .env.example .env
+
+# Generate Application Key
+php artisan key:generate
+
+# Buat Database SQLite
+touch database/database.sqlite
+
+# Migration dan Seeder
+php artisan migrate --seed
+
+# Sinkronisasi Data Pelabuhan (Opsional)
+php artisan ports:sync
+
+# Jalankan Frontend
+npm run dev
+
+# atau
+
+npm run build
+
+# Jalankan Server
+php artisan serve
+```
+
+Akses aplikasi melalui:
+
+```text
+http://127.0.0.1:8000
+```
+
+Beberapa layanan eksternal memerlukan API Key. Tambahkan konfigurasi pada file `.env` dan `config/services.php`.
+
+---
+
+# 👥 Role Pengguna
+
+| Role  | Hak Akses                                                                               |
+| ----- | --------------------------------------------------------------------------------------- |
+| user  | Dashboard, Weather, Economy, Country, Currency, Risk Score, Compare, Watchlist, Profile |
+| admin | Seluruh hak akses user ditambah panel `/admin`                                          |
+
+Seluruh halaman administrator dilindungi menggunakan `AdminMiddleware`. Pengguna non-admin akan menerima respons **403 Forbidden**.
+
+---
+
+# 🔌 REST API Publik
+
+RiskRadar juga menyediakan endpoint JSON yang dapat digunakan oleh aplikasi lain.
+
+| Method | Endpoint         | Fungsi           |
+| ------ | ---------------- | ---------------- |
+| GET    | `/api/countries` | Daftar negara    |
+| GET    | `/api/risk`      | Data risk score  |
+| GET    | `/api/ports`     | Data pelabuhan   |
+| GET    | `/api/news`      | Data berita      |
+| GET    | `/api/currency`  | Data nilai tukar |
+
+---
+
+# 👨‍💻 Pengembang
+
+**RiskRadar**
+
+Disusun oleh:
+
+**Marlina Yanti br. Tampubolon**
+NIM: **240180076**
+Program Studi **Sistem Informasi**
+Fakultas Teknik
+**Universitas Malikussaleh**
