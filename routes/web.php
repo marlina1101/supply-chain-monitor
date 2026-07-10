@@ -83,5 +83,5 @@ Route::prefix('api')->group(function () {
     Route::get('/currency',  [CurrencyController::class, 'api']);
 });
 
-// ===== AUTH ROUTES (login, register, dll) =====
+// ===== AUTH ROUTES (login, dll) =====
 require __DIR__.'/auth.php';

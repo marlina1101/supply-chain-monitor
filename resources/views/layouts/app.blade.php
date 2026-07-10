@@ -16,6 +16,8 @@
         .sidebar {
             width: 250px;
             min-height: 100vh;
+            max-height: 100vh;
+            overflow-y: auto;
             background: linear-gradient(180deg, #1b5e20 0%, #2e7d32 100%);
             position: fixed;
             top: 0; left: 0;
@@ -24,6 +26,25 @@
             display: flex;
             flex-direction: column;
         }
+
+        /* Styling scrollbar */
+        .sidebar::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .sidebar::-webkit-scrollbar-track {
+            background: rgba(255,255,255,0.05);
+        }
+
+        .sidebar::-webkit-scrollbar-thumb {
+            background: rgba(255,255,255,0.2);
+            border-radius: 3px;
+        }
+
+        .sidebar::-webkit-scrollbar-thumb:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
         .sidebar .brand {
             color: white;
             padding: 18px 20px;
@@ -256,11 +277,6 @@
             </div>
         </div>
 
-        {{-- Profil & Logout --}}
-        <a href="{{ route('profile.edit') }}"
-           class="nav-link {{ request()->routeIs('profile.edit') ? 'active' : '' }}">
-            <i class="bi bi-person-circle"></i> Profil Saya
-        </a>
         <form method="POST" action="{{ route('logout') }}">
             @csrf
             <button type="submit"
